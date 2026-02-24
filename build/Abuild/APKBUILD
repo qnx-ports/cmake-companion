@@ -1,0 +1,68 @@
+pkgname=cmake
+pkgver=4.2.3
+pkgrel=0
+pkgdesc="Cross-platform, open-source make system"
+url="https://www.cmake.org/"
+arch="all"
+license="BSD-3-Clause"
+# Remove nghttp2 and libcurl when bootstrapping
+depends="libbz2 libexpat libarchive ncurses xz-libs libuv zlib-ng lz4-libs nghttp2 libcurl libc++"
+makedepends="bzip2-dev expat-dev libarchive-dev ncurses-dev xz-dev libuv-dev zlib-ng-dev lz4-dev nghttp2-dev curl-dev libc++-dev clang"
+checkdepends="file"
+subpackages="$pkgname-doc $pkgname-bash-completion"
+case $pkgver in
+*.*.*.*) _v=v${pkgver%.*.*};;
+*.*.*) _v=v${pkgver%.*};;
+esac
+source="https://www.cmake.org/files/$_v/cmake-$pkgver.tar.gz"
+options="!check"
+builddir=${srcdir}/${pkgname}-${pkgver}
+
+build() {
+    extra_cmake_args="--system-nghttp2 --system-curl"
+    if [[ -n $QNX_BOOTSTRAP ]]; then
+        extra_cmake_args="--no-system-nghttp2 --no-system-curl"
+    fi
+    echo "$extra_cmake_args"
+    CC="clang" \
+    CXX="clang++" \
+    ./bootstrap \
+        --prefix=/usr \
+        --mandir=/share/man \
+        --datadir=/share/$pkgname \
+        --docdir=/share/doc/$pkgname \
+	$extra_cmake_args \
+        --no-system-cppdap \
+        --no-system-jsoncpp \
+        --no-system-librhash \
+        --system-bzip2 \
+        --system-expat \
+        --system-libarchive \
+        --system-liblzma \
+        --system-libuv \
+        --bootstrap-system-libuv \
+        --system-zlib \
+        --generator="Unix Makefiles" \
+        --parallel="${JOBS:-2}"
+    make
+}
+
+package() {
+    DESTDIR="${pkgdir}" make install
+
+    # Wrappers to ease the CMake 4 migration, aports that fail to build can
+    # switch to these while waiting for upstream to update CMakeLists.txt.
+    local exe; for exe in cmake ctest; do
+        cat > "$pkgdir"/usr/bin/${exe}3.5 <<-EOF
+#!/bin/sh
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+exec $exe "\$@"
+EOF
+        chmod 0755 "$pkgdir"/usr/bin/${exe}3.5
+	done
+
+}
+
+sha512sums="
+56cac755277bc3fcf190d6c947c99a718ee555b0524132427989a5d2d51d030c76c07f198ddeea0d9c7e57b24488d352e9b29bb106c1ad15397b92fb4487a88f  cmake-4.2.3.tar.gz
+"
