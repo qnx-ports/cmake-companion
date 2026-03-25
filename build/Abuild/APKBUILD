@@ -1,6 +1,6 @@
 pkgname=cmake
 pkgver=4.2.3
-pkgrel=${pkgrel:-0}
+pkgrel=0
 pkgdesc="Cross-platform, open-source make system"
 url="https://www.cmake.org/"
 arch="all"
@@ -63,7 +63,6 @@ EOF
 
 }
 
-options="$options ${DISABLE_CHECK:+!check}"
 sha512sums="
 56cac755277bc3fcf190d6c947c99a718ee555b0524132427989a5d2d51d030c76c07f198ddeea0d9c7e57b24488d352e9b29bb106c1ad15397b92fb4487a88f  cmake-4.2.3.tar.gz
 "
